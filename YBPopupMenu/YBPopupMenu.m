@@ -65,7 +65,25 @@
 
 @end
 
+@implementation YBPopupMenuItem
 
++ (YBPopupMenuItem*)menuItemWithTitle:(NSString*)title
+{
+	YBPopupMenuItem* item = [YBPopupMenuItem new];
+	item.title = title;
+	return item;
+}
+
++ (YBPopupMenuItem*)menuItemWithTitle:(NSString*)title details:(NSString*)details image:(UIImage*)image
+{
+	YBPopupMenuItem* item = [YBPopupMenuItem new];
+	item.title = title;
+	item.details = details;
+	item.image = image;
+	return item;
+}
+
+@end
 
 @interface YBPopupMenu ()
 <
@@ -78,7 +96,6 @@ UITableViewDataSource
 @property (nonatomic, assign) CGFloat       itemWidth;
 @property (nonatomic) CGPoint               point;
 @property (nonatomic, assign) BOOL          isCornerChanged;
-@property (nonatomic, strong) UIColor     * separatorColor;
 @property (nonatomic, assign) BOOL          isChangeDirection;
 @property (nonatomic, strong) UIView      * relyView;
 @end
@@ -95,6 +112,17 @@ UITableViewDataSource
 }
 
 #pragma mark - publics
++ (YBPopupMenu *)showAtPoint:(CGPoint)point items:(NSArray<YBPopupMenuItem*>*)items menuWidth:(CGFloat)itemWidth otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting
+{
+	YBPopupMenu *popupMenu = [[YBPopupMenu alloc] init];
+	popupMenu.point = point;
+	popupMenu.items = items;
+	popupMenu.itemWidth = itemWidth;
+	YB_SAFE_BLOCK(otherSetting,popupMenu);
+	[popupMenu show];
+	return popupMenu;
+}
+
 + (YBPopupMenu *)showAtPoint:(CGPoint)point titles:(NSArray *)titles icons:(NSArray *)icons menuWidth:(CGFloat)itemWidth otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting
 {
     YBPopupMenu *popupMenu = [[YBPopupMenu alloc] init];
@@ -105,6 +133,17 @@ UITableViewDataSource
     YB_SAFE_BLOCK(otherSetting,popupMenu);
     [popupMenu show];
     return popupMenu;
+}
+
++ (YBPopupMenu *)showRelyOnView:(UIView *)view items:(NSArray<YBPopupMenuItem*>*)items menuWidth:(CGFloat)itemWidth otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting
+{
+	YBPopupMenu *popupMenu = [[YBPopupMenu alloc] init];
+	popupMenu.relyView = view;
+	popupMenu.items = items;
+	popupMenu.itemWidth = itemWidth;
+	YB_SAFE_BLOCK(otherSetting,popupMenu);
+	[popupMenu show];
+	return popupMenu;
 }
 
 + (YBPopupMenu *)showRelyOnView:(UIView *)view titles:(NSArray *)titles icons:(NSArray *)icons menuWidth:(CGFloat)itemWidth otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting
@@ -150,7 +189,7 @@ UITableViewDataSource
 #pragma mark tableViewDelegate & dataSource
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return _titles.count;
+	return self.itemCount;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -174,28 +213,54 @@ UITableViewDataSource
     cell.textLabel.textColor = _textColor;
     if (_font) {
         cell.textLabel.font = _font;
-    }else {
+    } else {
         cell.textLabel.font = [UIFont systemFontOfSize:_fontSize];
     }
-    if ([_titles[indexPath.row] isKindOfClass:[NSAttributedString class]]) {
-        cell.textLabel.attributedText = _titles[indexPath.row];
-    }else if ([_titles[indexPath.row] isKindOfClass:[NSString class]]) {
-        cell.textLabel.text = _titles[indexPath.row];
-    }else {
-        cell.textLabel.text = nil;
-    }
-    cell.separatorColor = _separatorColor;
-    if (_images.count >= indexPath.row + 1) {
-        if ([_images[indexPath.row] isKindOfClass:[NSString class]]) {
-            cell.imageView.image = [UIImage imageNamed:_images[indexPath.row]];
-        }else if ([_images[indexPath.row] isKindOfClass:[UIImage class]]){
-            cell.imageView.image = _images[indexPath.row];
-        }else {
-            cell.imageView.image = nil;
-        }
-    }else {
-        cell.imageView.image = nil;
-    }
+	cell.separatorColor = _separatorColor;
+	if(self.selectedBackgroundColor) {
+		cell.selectedBackgroundView = [[UIView alloc] initWithFrame:cell.bounds];
+		cell.selectedBackgroundView.backgroundColor = self.selectedBackgroundColor;
+	}
+	if(self.items) {
+		YBPopupMenuItem* item = self.items[indexPath.row];
+		cell.textLabel.text = item.title;
+		cell.detailTextLabel.text = item.details;
+		cell.imageView.image = item.image;
+		if(item.color) {
+			cell.textLabel.textColor = item.color;
+		}
+		if(item.checked) {
+			cell.accessoryType = UITableViewCellAccessoryCheckmark;
+			if(self.checkedTextColor) {
+				cell.textLabel.textColor = self.checkedTextColor;
+			}
+			cell.tintColor = cell.textLabel.textColor;
+		}
+	} else {
+		id title = _titles[indexPath.row];
+		if ([title isKindOfClass:[NSAttributedString class]]) {
+			cell.textLabel.attributedText = title;
+		} else if ([title isKindOfClass:[NSString class]]) {
+			cell.textLabel.text = title;
+		} else {
+			cell.textLabel.text = nil;
+		}
+		id image = (_images.count >= indexPath.row + 1) ? _images[indexPath.row] : nil;
+		if ([image isKindOfClass:[NSString class]]) {
+			cell.imageView.image = [UIImage imageNamed:image];
+		} else if ([image isKindOfClass:[UIImage class]]){
+			cell.imageView.image = image;
+		} else {
+			cell.imageView.image = nil;
+		}
+		if(self.checkedIndex != NSNotFound) {
+			cell.accessoryType = UITableViewCellAccessoryCheckmark;
+			if(self.checkedTextColor) {
+				cell.textLabel.textColor = self.checkedTextColor;
+			}
+			cell.tintColor = cell.textLabel.textColor;
+		}
+	}
     return cell;
 }
 
@@ -267,6 +332,7 @@ UITableViewDataSource
 
 - (void)setDefaultSettings
 {
+	_checkedIndex = NSNotFound;
     _cornerRadius = 5.0;
     _rectCorner = UIRectCornerAllCorners;
     self.isShowShadow = YES;
@@ -316,7 +382,7 @@ UITableViewDataSource
                     [self calculateRealPointIfNeed];
                     [self updateUI];
                 });
-            }else {
+            } else {
                 //依赖point
                 [self updateUI];
             }
@@ -387,7 +453,7 @@ UITableViewDataSource
         default:
         {
             _textColor = [UIColor blackColor];
-            _backColor = [UIColor whiteColor];
+			_backColor = [UIColor whiteColor];
             _separatorColor = [UIColor lightGrayColor];
         }
             break;
@@ -404,15 +470,26 @@ UITableViewDataSource
     _images = images;
 }
 
+- (void)setItems:(NSArray<YBPopupMenuItem *> *)items
+{
+	_items = items;
+	for (NSUInteger i = 0; i < items.count; i++) {
+		if(items[i].checked) {
+			_checkedIndex = i;
+			break;
+		}
+	}
+}
+
 - (void)updateUI
 {
     _menuBackView.frame = CGRectMake(0, 0, YBScreenWidth, YBScreenHeight);
     CGFloat height;
-    if (_titles.count > _maxVisibleCount) {
+    if (self.itemCount > _maxVisibleCount) {
         height = _itemHeight * _maxVisibleCount + _borderWidth * 2;
         self.tableView.bounces = YES;
-    }else {
-        height = _itemHeight * _titles.count + _borderWidth * 2;
+    } else {
+        height = _itemHeight * self.itemCount + _borderWidth * 2;
         self.tableView.bounces = NO;
     }
      _isChangeDirection = NO;
@@ -420,31 +497,31 @@ UITableViewDataSource
         if (_point.y + height + _arrowHeight > YBScreenHeight - _minSpace) {
             _arrowDirection = YBPopupMenuArrowDirectionBottom;
             _isChangeDirection = YES;
-        }else {
+        } else {
             _arrowDirection = YBPopupMenuArrowDirectionTop;
             _isChangeDirection = NO;
         }
-    }else if (_priorityDirection == YBPopupMenuPriorityDirectionBottom) {
+    } else if (_priorityDirection == YBPopupMenuPriorityDirectionBottom) {
         if (_point.y - height - _arrowHeight < _minSpace) {
             _arrowDirection = YBPopupMenuArrowDirectionTop;
             _isChangeDirection = YES;
-        }else {
+        } else {
             _arrowDirection = YBPopupMenuArrowDirectionBottom;
             _isChangeDirection = NO;
         }
-    }else if (_priorityDirection == YBPopupMenuPriorityDirectionLeft) {
+    } else if (_priorityDirection == YBPopupMenuPriorityDirectionLeft) {
         if (_point.x + _itemWidth + _arrowHeight > YBScreenWidth - _minSpace) {
             _arrowDirection = YBPopupMenuArrowDirectionRight;
             _isChangeDirection = YES;
-        }else {
+        } else {
             _arrowDirection = YBPopupMenuArrowDirectionLeft;
             _isChangeDirection = NO;
         }
-    }else if (_priorityDirection == YBPopupMenuPriorityDirectionRight) {
+    } else if (_priorityDirection == YBPopupMenuPriorityDirectionRight) {
         if (_point.x - _itemWidth - _arrowHeight < _minSpace) {
             _arrowDirection = YBPopupMenuArrowDirectionLeft;
             _isChangeDirection = YES;
-        }else {
+        } else {
             _arrowDirection = YBPopupMenuArrowDirectionRight;
             _isChangeDirection = NO;
         }
@@ -455,39 +532,39 @@ UITableViewDataSource
         CGFloat y = _isChangeDirection ? _point.y  : _point.y;
         if (_arrowPosition > _itemWidth / 2) {
             self.frame = CGRectMake(YBScreenWidth - _minSpace - _itemWidth, y, _itemWidth, height + _arrowHeight);
-        }else if (_arrowPosition < _itemWidth / 2) {
+        } else if (_arrowPosition < _itemWidth / 2) {
             self.frame = CGRectMake(_minSpace, y, _itemWidth, height + _arrowHeight);
-        }else {
+        } else {
             self.frame = CGRectMake(_point.x - _itemWidth / 2, y, _itemWidth, height + _arrowHeight);
         }
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
         CGFloat y = _isChangeDirection ? _point.y - _arrowHeight - height : _point.y - _arrowHeight - height;
         if (_arrowPosition > _itemWidth / 2) {
             self.frame = CGRectMake(YBScreenWidth - _minSpace - _itemWidth, y, _itemWidth, height + _arrowHeight);
-        }else if (_arrowPosition < _itemWidth / 2) {
+        } else if (_arrowPosition < _itemWidth / 2) {
             self.frame = CGRectMake(_minSpace, y, _itemWidth, height + _arrowHeight);
-        }else {
+        } else {
             self.frame = CGRectMake(_point.x - _itemWidth / 2, y, _itemWidth, height + _arrowHeight);
         }
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
         CGFloat x = _isChangeDirection ? _point.x : _point.x;
         if (_arrowPosition < _itemHeight / 2) {
             self.frame = CGRectMake(x, _point.y - _arrowPosition, _itemWidth + _arrowHeight, height);
-        }else if (_arrowPosition > _itemHeight / 2) {
+        } else if (_arrowPosition > _itemHeight / 2) {
             self.frame = CGRectMake(x, _point.y - _arrowPosition, _itemWidth + _arrowHeight, height);
-        }else {
+        } else {
             self.frame = CGRectMake(x, _point.y - _arrowPosition, _itemWidth + _arrowHeight, height);
         }
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
         CGFloat x = _isChangeDirection ? _point.x - _itemWidth - _arrowHeight : _point.x - _itemWidth - _arrowHeight;
         if (_arrowPosition < _itemHeight / 2) {
             self.frame = CGRectMake(x, _point.y - _arrowPosition, _itemWidth + _arrowHeight, height);
-        }else if (_arrowPosition > _itemHeight / 2) {
+        } else if (_arrowPosition > _itemHeight / 2) {
             self.frame = CGRectMake(x, _point.y - _arrowPosition, _itemWidth + _arrowHeight, height);
-        }else {
+        } else {
             self.frame = CGRectMake(x, _point.y - _arrowPosition, _itemWidth + _arrowHeight, height);
         }
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionNone) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionNone) {
         
     }
     
@@ -507,11 +584,11 @@ UITableViewDataSource
     }
     if (_arrowDirection == YBPopupMenuArrowDirectionTop) {
         _point.y = _relyRect.size.height + _relyRect.origin.y;
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
         _point.y = _relyRect.origin.y;
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
         _point = CGPointMake(_relyRect.origin.x + _relyRect.size.width, _relyRect.origin.y + _relyRect.size.height / 2);
-    }else {
+    } else {
         _point = CGPointMake(_relyRect.origin.x, _relyRect.origin.y + _relyRect.size.height / 2);
     }
 }
@@ -522,11 +599,11 @@ UITableViewDataSource
     [super setFrame:frame];
     if (_arrowDirection == YBPopupMenuArrowDirectionTop) {
         self.tableView.frame = CGRectMake(_borderWidth, _borderWidth + _arrowHeight, frame.size.width - _borderWidth * 2, frame.size.height - _arrowHeight);
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
         self.tableView.frame = CGRectMake(_borderWidth, _borderWidth, frame.size.width - _borderWidth * 2, frame.size.height - _arrowHeight);
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
         self.tableView.frame = CGRectMake(_borderWidth + _arrowHeight, _borderWidth , frame.size.width - _borderWidth * 2 - _arrowHeight, frame.size.height);
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
         self.tableView.frame = CGRectMake(_borderWidth , _borderWidth , frame.size.width - _borderWidth * 2 - _arrowHeight, frame.size.height);
     }
 }
@@ -554,44 +631,44 @@ UITableViewDataSource
         
         if (haveTopLeftCorner) {
             _rectCorner = _rectCorner | UIRectCornerBottomLeft;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerBottomLeft);
         }
         if (haveTopRightCorner) {
             _rectCorner = _rectCorner | UIRectCornerBottomRight;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerBottomRight);
         }
         if (haveBottomLeftCorner) {
             _rectCorner = _rectCorner | UIRectCornerTopLeft;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerTopLeft);
         }
         if (haveBottomRightCorner) {
             _rectCorner = _rectCorner | UIRectCornerTopRight;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerTopRight);
         }
         
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft || _arrowDirection == YBPopupMenuArrowDirectionRight) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft || _arrowDirection == YBPopupMenuArrowDirectionRight) {
         if (haveTopLeftCorner) {
             _rectCorner = _rectCorner | UIRectCornerTopRight;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerTopRight);
         }
         if (haveTopRightCorner) {
             _rectCorner = _rectCorner | UIRectCornerTopLeft;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerTopLeft);
         }
         if (haveBottomLeftCorner) {
             _rectCorner = _rectCorner | UIRectCornerBottomRight;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerBottomRight);
         }
         if (haveBottomRightCorner) {
             _rectCorner = _rectCorner | UIRectCornerBottomLeft;
-        }else {
+        } else {
             _rectCorner = _rectCorner & (~UIRectCornerBottomLeft);
         }
     }
@@ -607,11 +684,11 @@ UITableViewDataSource
     
     if (_arrowDirection == YBPopupMenuArrowDirectionTop) {
         originRect.origin.y += _offset;
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
         originRect.origin.y -= _offset;
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
         originRect.origin.x += _offset;
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
         originRect.origin.x -= _offset;
     }
     self.frame = originRect;
@@ -626,11 +703,11 @@ UITableViewDataSource
     CGPoint point = CGPointMake(0.5, 0.5);
     if (_arrowDirection == YBPopupMenuArrowDirectionTop) {
         point = CGPointMake(_arrowPosition / _itemWidth, 0);
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionBottom) {
         point = CGPointMake(_arrowPosition / _itemWidth, 1);
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft) {
         point = CGPointMake(0, _arrowPosition / menuHeight);
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionRight) {
         point = CGPointMake(1, _arrowPosition / menuHeight);
     }
     CGRect originRect = self.frame;
@@ -647,23 +724,23 @@ UITableViewDataSource
     if (_arrowDirection == YBPopupMenuArrowDirectionTop || _arrowDirection == YBPopupMenuArrowDirectionBottom) {
         if (_point.x + _itemWidth / 2 > YBScreenWidth - _minSpace) {
             _arrowPosition = _itemWidth - (YBScreenWidth - _minSpace - _point.x);
-        }else if (_point.x < _itemWidth / 2 + _minSpace) {
+        } else if (_point.x < _itemWidth / 2 + _minSpace) {
             _arrowPosition = _point.x - _minSpace;
-        }else {
+        } else {
             _arrowPosition = _itemWidth / 2;
         }
         
-    }else if (_arrowDirection == YBPopupMenuArrowDirectionLeft || _arrowDirection == YBPopupMenuArrowDirectionRight) {
+    } else if (_arrowDirection == YBPopupMenuArrowDirectionLeft || _arrowDirection == YBPopupMenuArrowDirectionRight) {
     }
 }
 
 - (CGFloat)getMenuTotalHeight
 {
     CGFloat menuHeight = 0;
-    if (_titles.count > _maxVisibleCount) {
+    if (self.itemCount > _maxVisibleCount) {
         menuHeight = _itemHeight * _maxVisibleCount + _borderWidth * 2;
-    }else {
-        menuHeight = _itemHeight * _titles.count + _borderWidth * 2;
+    } else {
+        menuHeight = _itemHeight * self.itemCount + _borderWidth * 2;
     }
     return menuHeight;
 }
@@ -673,6 +750,38 @@ UITableViewDataSource
     UIBezierPath *bezierPath = [YBPopupMenuPath yb_bezierPathWithRect:rect rectCorner:_rectCorner cornerRadius:_cornerRadius borderWidth:_borderWidth borderColor:_borderColor backgroundColor:_backColor arrowWidth:_arrowWidth arrowHeight:_arrowHeight arrowPosition:_arrowPosition arrowDirection:_arrowDirection];
     [bezierPath fill];
     [bezierPath stroke];
+}
+
+- (NSUInteger)itemCount
+{
+	return self.items ? self.items.count : _titles.count;
+}
+
+- (void)setCheckedIndex:(NSUInteger)checkedIndex
+{
+	if(_checkedIndex != checkedIndex) {
+		NSUInteger index = _checkedIndex;
+		_checkedIndex = checkedIndex;
+		if(self.items) {
+			if(index != NSNotFound) {
+				self.items[index].checked = NO;
+			}
+			if(checkedIndex != NSNotFound) {
+				self.items[checkedIndex].checked = YES;
+			}
+		}
+		NSMutableArray<NSIndexPath*>* indexes = [NSMutableArray new];
+		NSUInteger count = self.tableView.visibleCells.count;
+		if(index != NSNotFound && index < count) {
+			[indexes addObject:[NSIndexPath indexPathForRow:index inSection:0]];
+		}
+		if(checkedIndex != NSNotFound && checkedIndex < count) {
+			[indexes addObject:[NSIndexPath indexPathForRow:checkedIndex inSection:0]];
+		}
+		if(indexes.count > 0) {
+			[self.tableView reloadRowsAtIndexPaths:indexes withRowAnimation:UITableViewRowAnimationNone];
+		}
+	}
 }
 
 @end
