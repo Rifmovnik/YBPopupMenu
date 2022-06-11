@@ -58,7 +58,22 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
 
 @end
 
+@interface YBPopupMenuItem : NSObject
+
+@property (nonatomic) NSString* title;
+@property (nonatomic) NSString* details;
+@property (nonatomic) UIImage* image;
+@property (nonatomic) UIColor* color;
+@property (nonatomic) BOOL checked;
+
++ (YBPopupMenuItem*)menuItemWithTitle:(NSString*)title;
++ (YBPopupMenuItem*)menuItemWithTitle:(NSString*)title details:(NSString*)details image:(UIImage*)image;
+
+@end
+
 @interface YBPopupMenu : UIView
+
+@property (nonatomic) NSArray<YBPopupMenuItem*>* items;
 
 /**
  标题数组 只读属性
@@ -180,6 +195,11 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
  */
 @property (nonatomic, strong) UIColor * backColor;
 
+@property (nonatomic, strong) UIColor* separatorColor;
+@property (nonatomic, strong) UIColor* checkedTextColor;
+@property (nonatomic, strong) UIColor* selectedBackgroundColor;
+@property (nonatomic, assign) NSUInteger checkedIndex;
+
 /**
  item的高度 Default is 44;
  */
@@ -210,6 +230,11 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
  */
 @property (nonatomic, weak) id <YBPopupMenuDelegate> delegate;
 
++ (YBPopupMenu *)showAtPoint:(CGPoint)point
+					  items:(NSArray<YBPopupMenuItem*>*)items
+				   menuWidth:(CGFloat)itemWidth
+			   otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting;
+
 /**
  在指定位置弹出
  
@@ -224,6 +249,11 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
                        icons:(NSArray *)icons
                    menuWidth:(CGFloat)itemWidth
                otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting;
+
++ (YBPopupMenu *)showRelyOnView:(UIView *)view
+						  items:(NSArray<YBPopupMenuItem*>*)items
+					  menuWidth:(CGFloat)itemWidth
+				  otherSettings:(void (^) (YBPopupMenu * popupMenu))otherSetting;
 
 /**
  依赖指定view弹出

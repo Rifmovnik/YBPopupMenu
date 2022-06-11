@@ -27,8 +27,17 @@
 }
 
 - (IBAction)onPopupClick:(UIButton *)sender {
-    [YBPopupMenu showRelyOnView:sender titles:TITLES icons:ICONS menuWidth:120 otherSettings:^(YBPopupMenu *popupMenu) {
+	NSArray<YBPopupMenuItem*>* items = @[
+		[YBPopupMenuItem menuItemWithTitle:@"item1"],
+		[YBPopupMenuItem menuItemWithTitle:@"item2"],
+		[YBPopupMenuItem menuItemWithTitle:@"item3"],
+		[YBPopupMenuItem menuItemWithTitle:@"item4"],
+	];
+    [YBPopupMenu showRelyOnView:sender items:items menuWidth:120 otherSettings:^(YBPopupMenu *popupMenu) {
         popupMenu.delegate = self;
+		popupMenu.checkedTextColor = UIColor.systemGreenColor;
+		popupMenu.checkedIndex = 3;
+		popupMenu.selectedBackgroundColor = UIColor.brownColor;
     }];
 }
 
@@ -89,8 +98,10 @@
 #pragma mark - YBPopupMenuDelegate
 - (void)ybPopupMenu:(YBPopupMenu *)ybPopupMenu didSelectedAtIndex:(NSInteger)index
 {
+	ybPopupMenu.checkedIndex = index;
     //推荐回调
-    NSLog(@"点击了 %@ 选项",ybPopupMenu.titles[index]);
+	id title = ybPopupMenu.items ? ybPopupMenu.items[index].title : ybPopupMenu.titles[index];
+    NSLog(@"点击了 %@ 选项", title);
 }
 
 - (void)ybPopupMenuBeganDismiss:(YBPopupMenu *)ybPopupMenu
