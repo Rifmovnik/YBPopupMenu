@@ -203,19 +203,19 @@ UITableViewDataSource
         return tableViewCell;
     }
     
-    static NSString * identifier = @"ybPopupMenu";
+	BOOL hasDetails = self.items && self.items[indexPath.row];
+	NSString* identifier = hasDetails ? @"ybPopupMenu2" : @"ybPopupMenu";
     YBPopupMenuCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
     if (!cell) {
-        cell = [[YBPopupMenuCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
+		cell = [[YBPopupMenuCell alloc] initWithStyle:(hasDetails ? self.detailsCellStyle : UITableViewCellStyleDefault) reuseIdentifier:identifier];
         cell.textLabel.numberOfLines = 0;
     }
     cell.backgroundColor = [UIColor clearColor];
     cell.textLabel.textColor = _textColor;
-    if (_font) {
-        cell.textLabel.font = _font;
-    } else {
-        cell.textLabel.font = [UIFont systemFontOfSize:_fontSize];
-    }
+	cell.textLabel.font = _font ? : [UIFont systemFontOfSize:_fontSize];
+	if(hasDetails && (_detailFont || self.detailsCellStyle != UITableViewCellStyleSubtitle)) {
+		cell.detailTextLabel.font = _detailFont ? : cell.textLabel.font;
+	}
 	cell.separatorColor = _separatorColor;
 	if(self.selectedBackgroundColor) {
 		cell.selectedBackgroundView = [[UIView alloc] initWithFrame:cell.bounds];
@@ -224,17 +224,27 @@ UITableViewDataSource
 	if(self.items) {
 		YBPopupMenuItem* item = self.items[indexPath.row];
 		cell.textLabel.text = item.title;
-		cell.detailTextLabel.text = item.details;
 		cell.imageView.image = item.image;
 		if(item.color) {
 			cell.textLabel.textColor = item.color;
 		}
 		if(item.checked) {
-			cell.accessoryType = UITableViewCellAccessoryCheckmark;
+//			if(!item.image && self.detailsCellStyle != UITableViewCellStyleSubtitle) {
+//				if(@available(iOS 13, *)) {
+//					cell.imageView.image = [UIImage systemImageNamed:@"checkmark"];
+//				}
+//			} else
+			{
+				cell.accessoryType = UITableViewCellAccessoryCheckmark;
+			}
 			if(self.checkedTextColor) {
 				cell.textLabel.textColor = self.checkedTextColor;
 			}
 			cell.tintColor = cell.textLabel.textColor;
+		}
+		if(item.details) {
+			cell.detailTextLabel.text = item.details;
+			cell.detailTextLabel.textColor = (self.detailTextColor && !(item.checked && self.checkedTextColor)) ? self.detailTextColor : [cell.textLabel.textColor colorWithAlphaComponent:.65];
 		}
 	} else {
 		id title = _titles[indexPath.row];
@@ -253,7 +263,7 @@ UITableViewDataSource
 		} else {
 			cell.imageView.image = nil;
 		}
-		if(self.checkedIndex != NSNotFound) {
+		if(self.checkedIndex == indexPath.row) {
 			cell.accessoryType = UITableViewCellAccessoryCheckmark;
 			if(self.checkedTextColor) {
 				cell.textLabel.textColor = self.checkedTextColor;
@@ -333,6 +343,7 @@ UITableViewDataSource
 - (void)setDefaultSettings
 {
 	_checkedIndex = NSNotFound;
+	_detailsCellStyle = UITableViewCellStyleSubtitle;
     _cornerRadius = 5.0;
     _rectCorner = UIRectCornerAllCorners;
     self.isShowShadow = YES;

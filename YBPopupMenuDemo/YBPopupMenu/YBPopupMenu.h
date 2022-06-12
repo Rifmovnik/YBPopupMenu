@@ -196,9 +196,14 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
 @property (nonatomic, strong) UIColor * backColor;
 
 @property (nonatomic, strong) UIColor* separatorColor;
-@property (nonatomic, strong) UIColor* checkedTextColor;
 @property (nonatomic, strong) UIColor* selectedBackgroundColor;
+
+@property (nonatomic, strong) UIColor* detailTextColor;
+@property (nonatomic, strong) UIFont* detailFont;
+@property (nonatomic, assign) UITableViewCellStyle detailsCellStyle;
+
 @property (nonatomic, assign) NSUInteger checkedIndex;
+@property (nonatomic, strong) UIColor* checkedTextColor;
 
 /**
  item的高度 Default is 44;

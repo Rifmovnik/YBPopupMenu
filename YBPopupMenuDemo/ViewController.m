@@ -28,16 +28,18 @@
 
 - (IBAction)onPopupClick:(UIButton *)sender {
 	NSArray<YBPopupMenuItem*>* items = @[
-		[YBPopupMenuItem menuItemWithTitle:@"item1"],
-		[YBPopupMenuItem menuItemWithTitle:@"item2"],
-		[YBPopupMenuItem menuItemWithTitle:@"item3"],
-		[YBPopupMenuItem menuItemWithTitle:@"item4"],
+		[YBPopupMenuItem menuItemWithTitle:@"item1" details:@"details1" image:nil],
+		[YBPopupMenuItem menuItemWithTitle:@"item2" details:@"details2" image:nil],
+		[YBPopupMenuItem menuItemWithTitle:@"item3" details:@"details3" image:nil],
+		[YBPopupMenuItem menuItemWithTitle:@"item4" details:@"details4" image:nil],
 	];
-    [YBPopupMenu showRelyOnView:sender items:items menuWidth:120 otherSettings:^(YBPopupMenu *popupMenu) {
+    [YBPopupMenu showRelyOnView:sender items:items menuWidth:200 otherSettings:^(YBPopupMenu *popupMenu) {
         popupMenu.delegate = self;
 		popupMenu.checkedTextColor = UIColor.systemGreenColor;
 		popupMenu.checkedIndex = 3;
 		popupMenu.selectedBackgroundColor = UIColor.brownColor;
+		popupMenu.detailTextColor = UIColor.systemBlueColor;
+		popupMenu.detailsCellStyle = UITableViewCellStyleValue1;
     }];
 }
 
