@@ -424,12 +424,16 @@ UITableViewDataSource
 - (void)setIsShowShadow:(BOOL)isShowShadow
 {
     _isShowShadow = isShowShadow;
-    self.layer.shadowOpacity = isShowShadow ? 0.5 : 0;
+    self.layer.shadowOpacity = isShowShadow ? 0.4 : 0;
     self.layer.shadowOffset = CGSizeMake(0, 0);
-    self.layer.shadowRadius = isShowShadow ? 2.0 : 0;
-	if(self.shadowColor) {
-		self.layer.shadowColor = isShowShadow ? self.shadowColor.CGColor : nil;
-	}
+    self.layer.shadowRadius = isShowShadow ? 3.0 : 0;
+	self.layer.shadowColor = isShowShadow ? self.shadowColor.CGColor : nil;
+}
+
+- (void)setShadowColor:(UIColor *)shadowColor
+{
+	_shadowColor = shadowColor;
+	self.layer.shadowColor = _isShowShadow ? self.shadowColor.CGColor : nil;
 }
 
 - (void)setRelyView:(UIView *)relyView
