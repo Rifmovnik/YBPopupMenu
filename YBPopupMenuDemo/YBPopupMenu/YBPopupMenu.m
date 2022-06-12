@@ -427,6 +427,7 @@ UITableViewDataSource
     self.layer.shadowOpacity = isShowShadow ? 0.5 : 0;
     self.layer.shadowOffset = CGSizeMake(0, 0);
     self.layer.shadowRadius = isShowShadow ? 2.0 : 0;
+	self.layer.shadowColor = isShowShadow ? self.shadowColor.CGColor : nil;
 }
 
 - (void)setRelyView:(UIView *)relyView

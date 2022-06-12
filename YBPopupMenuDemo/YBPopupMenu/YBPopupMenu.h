@@ -205,6 +205,8 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
 @property (nonatomic, assign) NSUInteger checkedIndex;
 @property (nonatomic, strong) UIColor* checkedTextColor;
 
+@property (nonatomic, strong) UIColor* shadowColor;
+
 /**
  item的高度 Default is 44;
  */
