@@ -344,6 +344,7 @@ UITableViewDataSource
 {
 	_checkedIndex = NSNotFound;
 	_detailsCellStyle = UITableViewCellStyleSubtitle;
+	_shadowColor = UIColor.blackColor;
     _cornerRadius = 5.0;
     _rectCorner = UIRectCornerAllCorners;
     self.isShowShadow = YES;
@@ -427,13 +428,13 @@ UITableViewDataSource
     self.layer.shadowOpacity = isShowShadow ? 0.4 : 0;
     self.layer.shadowOffset = CGSizeMake(0, 0);
     self.layer.shadowRadius = isShowShadow ? 3.0 : 0;
-	self.layer.shadowColor = isShowShadow ? self.shadowColor.CGColor : nil;
+	self.layer.shadowColor = self.shadowColor.CGColor;
 }
 
 - (void)setShadowColor:(UIColor *)shadowColor
 {
 	_shadowColor = shadowColor;
-	self.layer.shadowColor = _isShowShadow ? self.shadowColor.CGColor : nil;
+	self.layer.shadowColor = self.shadowColor.CGColor;
 }
 
 - (void)setRelyView:(UIView *)relyView
@@ -465,6 +466,7 @@ UITableViewDataSource
             _textColor = [UIColor lightGrayColor];
             _backColor = [UIColor colorWithRed:0.25 green:0.27 blue:0.29 alpha:1];
             _separatorColor = [UIColor lightGrayColor];
+			_shadowColor = UIColor.whiteColor;
         }
             break;
             
@@ -473,6 +475,7 @@ UITableViewDataSource
             _textColor = [UIColor blackColor];
 			_backColor = [UIColor whiteColor];
             _separatorColor = [UIColor lightGrayColor];
+			_shadowColor = UIColor.blackColor;
         }
             break;
     }
