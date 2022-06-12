@@ -284,6 +284,6 @@ typedef NS_ENUM(NSInteger , YBPopupMenuPriorityDirection) {
 /**
  隐藏window上所有的popupMenu
  */
-+ (void)dismissAllPopupMenu;
++ (BOOL)dismissAllPopupMenu;
 
 @end

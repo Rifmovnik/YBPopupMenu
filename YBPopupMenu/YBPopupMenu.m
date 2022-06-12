@@ -176,14 +176,17 @@ UITableViewDataSource
     }];
 }
 
-+ (void)dismissAllPopupMenu
++ (BOOL)dismissAllPopupMenu
 {
+	BOOL result = NO;
     for (UIView * subView in YBMainWindow.subviews) {
         if ([subView isKindOfClass:[YBPopupMenu class]]) {
             YBPopupMenu * popupMenu = (YBPopupMenu *)subView;
             [popupMenu dismiss];
+			result = YES;
         }
     }
+	return result;
 }
 
 #pragma mark tableViewDelegate & dataSource
